@@ -1,4 +1,4 @@
-import { generateText, Output } from "ai";
+import { generateText, Output, RetryError } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { APICallError, NoSuchModelError } from "@ai-sdk/provider";
@@ -231,79 +231,11 @@ export const generateCommitDescription = async ({
   }
 };
 
-export type CombineCommitMessagesOptions = {
-  messages: string[];
-  baseUrl: string;
-  apiKey: string;
-  model: string;
-  locale: string;
-  maxLength: number;
-  type: CommitType;
-  timeout: number;
-  customPrompt?: string;
-  headers?: Record<string, string>;
-};
-
-export const combineCommitMessages = async ({
-  messages,
-  baseUrl,
-  apiKey,
-  model,
-  maxLength,
-  timeout,
-  headers,
-}: CombineCommitMessagesOptions) => {
-  try {
-    const provider = makeProvider(baseUrl, apiKey, headers);
-    const { controller, timeoutId } = createAbortController(timeout);
-
-    const system = `You are a tool that generates git commit messages. Your task is to combine multiple commit messages into one.
-Input: Several commit messages separated by newlines.
-Output: A single commit message starting with type like 'feat:' or 'fix:'.
-
-Do not add thanks, explanations, or any text outside the commit message. Respond with JSON: {"title": "combined commit message"}.`;
-
-    const result = await generateText({
-      model: provider(model),
-      output: Output.object({ schema: titleSchema }),
-      system,
-      prompt: messages.join("\n"),
-      temperature: 0.4,
-      maxRetries: 2,
-      reasoning: "none",
-      abortSignal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-    let combinedMessage = result.output.title;
-
-    if (combinedMessage.length > maxLength) {
-      try {
-        combinedMessage = await shortenCommitMessage(
-          provider,
-          model,
-          combinedMessage,
-          maxLength,
-          timeout,
-        );
-      } catch {
-        // If shortening fails, keep the original
-      }
-    }
-
-    return { messages: [combinedMessage], usage: result.usage };
-  } catch (error) {
-    handleGenerateError(error, model, timeout);
-  }
-};
-
-// Shared error handler for generation functions
 function handleGenerateError(error: unknown, model: string, timeout: number): never {
-  if (
-    AbortSignal.prototype.aborted &&
-    error instanceof DOMException &&
-    error.name === "AbortError"
-  ) {
+  // RetryError wraps the last attempt's error once maxRetries are exhausted
+  if (RetryError.isInstance(error)) error = error.lastError;
+
+  if (error instanceof DOMException && error.name === "AbortError") {
     throw new KnownError(
       "Request timed out after " +
         timeout / 1000 +

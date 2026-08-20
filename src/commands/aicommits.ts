@@ -2,24 +2,16 @@ import { execa } from "execa";
 import { black, dim, green, red, yellow, bgCyan } from "kolorist";
 import { copyToClipboard as copyMessage } from "../utils/clipboard.js";
 import { intro, outro, spinner } from "@clack/prompts";
-import {
-  assertGitRepo,
-  getStagedDiff,
-  getStagedDiffForFiles,
-  getDetectedMessage,
-} from "../utils/git.js";
+import { assertGitRepo, getStagedDiff, getDetectedMessage } from "../utils/git.js";
 import { getConfig, setConfigs } from "../utils/config-runtime.js";
 import { getProvider } from "../feature/providers/index.js";
-import {
-  generateCommitMessage,
-  generateCommitDescription,
-  combineCommitMessages,
-} from "../utils/openai.js";
+import { generateCommitMessage, generateCommitDescription } from "../utils/openai.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
 import { getCommitMessage } from "../utils/commit-helpers.js";
 import { isHeadless } from "../utils/headless.js";
-import { MAX_DIFF_LENGTH, DIFF_TRUNCATED_SUFFIX } from "../utils/constants.js";
+import { MAX_DIFF_LENGTH } from "../utils/constants.js";
+import { summarizeDiff } from "../utils/diff-summary.js";
 
 export default async (
   generate: number | undefined,
@@ -103,13 +95,10 @@ export default async (
     // Use the unified model setting or provider default
     config.model = config.OPENAI_MODEL || providerInstance.getDefaultModel();
 
-    // Check if diff is large and needs chunking
-    const MAX_FILES = 50;
-    const CHUNK_SIZE = 10;
-    let isChunking = false;
-    if (staged.files.length > MAX_FILES) {
-      isChunking = true;
-    }
+    // Prefer a condensed skeleton for huge diffs: ~30x fewer tokens
+    const prepareDiff = (diff: string) =>
+      diff.length > MAX_DIFF_LENGTH ? summarizeDiff(diff) : diff;
+    const diffToUse = prepareDiff(staged.diff);
 
     const baseUrl = providerInstance.getBaseUrl();
     const apiKey = providerInstance.getApiKey() || "";
@@ -128,10 +117,6 @@ export default async (
       try {
         let messages: string[];
         let usage: any;
-        let diffToUse = staged.diff;
-        if (diffToUse.length > MAX_DIFF_LENGTH) {
-          diffToUse = diffToUse.substring(0, MAX_DIFF_LENGTH) + DIFF_TRUNCATED_SUFFIX;
-        }
 
         if (config.type === "conventional+body" || config.type === "subject+body") {
           const result = await generateCommitMessage({
@@ -162,83 +147,6 @@ export default async (
           });
           messages = [description.trim() ? `${title}\n\n${description.trim()}` : title];
           usage = result.usage;
-        } else if (isChunking) {
-          // Split files into chunks
-          const chunks: string[][] = [];
-          for (let i = 0; i < staged.files.length; i += CHUNK_SIZE) {
-            chunks.push(staged.files.slice(i, i + CHUNK_SIZE));
-          }
-
-          const chunkMessages: string[] = [];
-          let totalUsage = {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-            total_tokens: 0,
-          };
-
-          for (const chunk of chunks) {
-            const chunkDiff = await getStagedDiffForFiles(chunk, excludeFiles);
-            if (chunkDiff && chunkDiff.diff) {
-              let diffToUse = chunkDiff.diff;
-              if (diffToUse.length > MAX_DIFF_LENGTH) {
-                diffToUse = diffToUse.substring(0, MAX_DIFF_LENGTH) + DIFF_TRUNCATED_SUFFIX;
-              }
-              const result = await generateCommitMessage({
-                baseUrl,
-                apiKey,
-                model: config.model!,
-                locale: config.locale,
-                diff: diffToUse,
-                completions: config.generate,
-                maxLength: config["max-length"],
-                type: config.type,
-                timeout,
-                customPrompt,
-                headers: providerHeaders,
-              });
-              chunkMessages.push(...result.messages);
-              if (result.usage) {
-                totalUsage.prompt_tokens +=
-                  (result.usage as any).prompt_tokens || (result.usage as any).promptTokens || 0;
-                totalUsage.completion_tokens +=
-                  (result.usage as any).completion_tokens ||
-                  (result.usage as any).completionTokens ||
-                  0;
-                totalUsage.total_tokens +=
-                  (result.usage as any).total_tokens || (result.usage as any).totalTokens || 0;
-              }
-            }
-          }
-
-          // Combine the chunk messages
-          const combineResult = await combineCommitMessages({
-            messages: chunkMessages,
-            baseUrl,
-            apiKey,
-            model: config.model!,
-            locale: config.locale,
-            maxLength: config["max-length"],
-            type: config.type,
-            timeout,
-            customPrompt,
-            headers: providerHeaders,
-          });
-          messages = combineResult.messages;
-          if (combineResult.usage) {
-            totalUsage.prompt_tokens +=
-              (combineResult.usage as any).prompt_tokens ||
-              (combineResult.usage as any).promptTokens ||
-              0;
-            totalUsage.completion_tokens +=
-              (combineResult.usage as any).completion_tokens ||
-              (combineResult.usage as any).completionTokens ||
-              0;
-            totalUsage.total_tokens +=
-              (combineResult.usage as any).total_tokens ||
-              (combineResult.usage as any).totalTokens ||
-              0;
-          }
-          usage = totalUsage;
         } else {
           const result = await generateCommitMessage({
             baseUrl,

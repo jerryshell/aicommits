@@ -6,4 +6,5 @@ describe("aicommits", ({ runTestSuite }) => {
   runTestSuite(import("./specs/togetherai/index.js"));
   runTestSuite(import("./specs/config.js"));
   runTestSuite(import("./specs/git-hook.js"));
+  runTestSuite(import("./specs/diff-summary.js"));
 });

@@ -78,17 +78,5 @@ export const getStagedDiff = async (excludeFiles?: string[]) => {
   };
 };
 
-export const getStagedDiffForFiles = async (files: string[], excludeFiles?: string[]) => {
-  const diffCached = ["diff", "--cached", "--diff-algorithm=minimal"];
-  const excludes = [...filesToExclude, ...(excludeFiles ? excludeFiles.map(excludeFromDiff) : [])];
-
-  const { stdout: diff } = await execa("git", [...diffCached, "--", ...files, ...excludes]);
-
-  return {
-    files,
-    diff,
-  };
-};
-
 export const getDetectedMessage = (files: string[]) =>
   `Detected ${files.length.toLocaleString()} staged file${files.length > 1 ? "s" : ""}`;
