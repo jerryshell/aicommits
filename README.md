@@ -4,10 +4,10 @@ AI-powered git commit message generator. Fork of [nutlope/aicommits](https://git
 
 ## What's different from upstream
 
-- **Structured output** — Uses Zod schemas + `Output.object()` to enforce JSON responses, eliminating parsing fragility from free-text LLM output.
-- **No reasoning tokens** — All LLM calls set `reasoning: "none"` to skip thinking/reasoning tokens, saving costs on models that support it.
-- **Large-diff summarization** — Diffs over 30 KB are condensed locally into a per-file skeleton (stat + key declarations) instead of sending truncated raw diff text, cutting tokens ~10× on big commits. Small diffs are sent verbatim.
-- **Bun for dev, Node for prod** — Dev tooling uses Bun (faster builds, oxfmt, oxlint). Production binary targets Node.
+- **Structured output**: Uses Zod schemas + `Output.object()` to enforce JSON responses, eliminating parsing fragility from free-text LLM output.
+- **No reasoning tokens**: All LLM calls set `reasoning: "none"` to skip thinking/reasoning tokens, saving costs on models that support it.
+- **Large-diff summarization**: Diffs over 30 KB are condensed locally into a per-file skeleton (stat + key declarations) instead of sending truncated raw diff text, cutting tokens ~10× on big commits. Small diffs are sent verbatim.
+- **Bun for dev, Node for prod**: Dev tooling uses Bun (faster builds, oxfmt, oxlint). Production binary targets Node.
 
 ## Install
 
@@ -20,7 +20,7 @@ npm add -g @jerryshell/aicommits
 ```bash
 aicommits setup   # configure your API endpoint and key, pick a model
 aicommits         # generate a commit message from staged changes
-# tip: `aic` works too — same thing, shorter
+# tip: `aic` works too (same thing, shorter)
 ```
 
 ## Development
@@ -59,4 +59,4 @@ bun link
 
 ## Providers
 
-Any OpenAI-compatible endpoint works — OpenAI, Groq, xAI, Together, Ollama, LM Studio, vLLM, or a custom server. `aicommits setup` asks for the base URL and API key; no per-provider presets or hardcoded defaults. Local endpoints (e.g. Ollama) can use an empty API key.
+Any OpenAI-compatible endpoint works: OpenAI, Groq, xAI, Together, Ollama, LM Studio, vLLM, or a custom server. `aicommits setup` asks for the base URL and API key; no per-provider presets or hardcoded defaults. Local endpoints (e.g. Ollama) can use an empty API key.
