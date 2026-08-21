@@ -3,8 +3,7 @@ import { black, dim, green, red, yellow, bgCyan } from "kolorist";
 import { copyToClipboard as copyMessage } from "../utils/clipboard.js";
 import { intro, outro, spinner } from "@clack/prompts";
 import { assertGitRepo, getStagedDiff, getDetectedMessage } from "../utils/git.js";
-import { getConfig } from "../utils/config-runtime.js";
-import { getGenerateParams } from "../feature/providers/index.js";
+import { getConfig, getGenerateParams } from "../utils/config-runtime.js";
 import { generateMessages } from "../utils/openai.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 

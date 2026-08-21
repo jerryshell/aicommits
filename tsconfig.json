@@ -9,6 +9,6 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "bun"]
   }
 }

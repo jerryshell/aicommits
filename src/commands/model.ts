@@ -1,8 +1,7 @@
 import { command } from "cleye";
 import { outro } from "@clack/prompts";
-import { getConfig, setConfigs } from "../utils/config-runtime.js";
-import { getGenerateParams } from "../feature/providers/index.js";
-import { selectModel } from "../feature/models.js";
+import { getConfig, setConfigs, getGenerateParams } from "../utils/config-runtime.js";
+import { selectModel } from "../models.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { isInteractive } from "../utils/headless.js";
 

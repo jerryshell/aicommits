@@ -1,14 +1,11 @@
 import path from "path";
-import { testSuite, expect } from "manten";
-import { createFixture, createGit, files } from "../utils.js";
+import { describe, test, expect } from "bun:test";
+import { createFixture, createGit, files } from "./utils.js";
 
-export default testSuite(({ describe }) => {
-  describe("Git hook", ({ test }) => {
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn("⚠️  process.env.OPENAI_API_KEY is necessary to run these tests. Skipping...");
-      return;
-    }
-
+if (!process.env.OPENAI_API_KEY) {
+  console.warn("⚠️  process.env.OPENAI_API_KEY is necessary to run these tests. Skipping...");
+} else {
+  describe("Git hook", () => {
     test("errors when not in Git repo", async () => {
       const { fixture, aicommits } = await createFixture(files);
       const { exitCode, stderr } = await aicommits(["hook", "install"], {
@@ -62,4 +59,4 @@ export default testSuite(({ describe }) => {
       await fixture.rm();
     });
   });
-});
+}

@@ -1,19 +1,18 @@
-import { testSuite, expect } from "manten";
-import { createFixture, createGit, files } from "../../utils.js";
+import { describe, test, expect } from "bun:test";
+import { createFixture, createGit, files } from "./utils.js";
 
-export default testSuite(({ describe }) => {
-  if (process.platform === "win32") {
-    // https://github.com/nodejs/node/issues/31409
-    console.warn("Skipping tests on Windows because Node.js spawn cant open TTYs");
-    return;
-  }
+const skipReason =
+  process.platform === "win32"
+    ? // https://github.com/nodejs/node/issues/31409
+      "Skipping tests on Windows because Node.js spawn cannot open TTYs"
+    : !process.env.OPENAI_API_KEY
+      ? "⚠️  process.env.OPENAI_API_KEY is necessary to run these tests. Skipping..."
+      : "";
 
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("⚠️  process.env.OPENAI_API_KEY is necessary to run these tests. Skipping...");
-    return;
-  }
-
-  describe("Commits", async ({ test, describe }) => {
+if (skipReason) {
+  console.warn(skipReason);
+} else {
+  describe("Commits", () => {
     test("Excludes files", async () => {
       const { fixture, aicommits } = await createFixture(files);
       const git = await createGit(fixture.path);
@@ -128,7 +127,7 @@ export default testSuite(({ describe }) => {
       await fixture.rm();
     });
 
-    test("Accepts --generate flag, overriding config", async ({ onTestFail }) => {
+    test("Accepts --generate flag, overriding config", async () => {
       const { fixture, aicommits } = await createFixture({
         ...files,
         ".aicommits": `${files[".aicommits"]}\ngenerate=4`,
@@ -153,7 +152,9 @@ export default testSuite(({ describe }) => {
       const { stdout } = await committing;
       const countChoices = stdout.match(/ {2}[●○]/g)?.length ?? 0;
 
-      onTestFail(() => console.log({ stdout }));
+      if (countChoices !== 2) {
+        console.log({ stdout });
+      }
       expect(countChoices).toBe(2);
 
       const statusAfter = await git("status", ["--porcelain", "--untracked-files=no"]);
@@ -208,7 +209,7 @@ export default testSuite(({ describe }) => {
       await fixture.rm();
     });
 
-    describe("commit types", ({ test }) => {
+    describe("commit types", () => {
       test("Should not use conventional commits by default", async () => {
         const conventionalCommitPattern =
           /(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test):\s/;
@@ -408,7 +409,7 @@ export default testSuite(({ describe }) => {
       });
     });
 
-    describe("proxy", ({ test }) => {
+    describe("proxy", () => {
       test("Fails on deprecated proxy config", async () => {
         const { fixture, aicommits } = await createFixture({
           ...files,
@@ -466,4 +467,4 @@ export default testSuite(({ describe }) => {
       });
     });
   });
-});
+}

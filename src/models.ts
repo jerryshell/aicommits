@@ -3,9 +3,9 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import crypto from "crypto";
-import { CURRENT_LABEL_FORMAT } from "../utils/constants.js";
+import { CURRENT_LABEL_FORMAT } from "./utils/constants.js";
 import { isCancel, spinner } from "@clack/prompts";
-import { fileExists } from "../utils/fs.js";
+import { fileExists } from "./utils/fs.js";
 
 interface ModelObject {
   id?: string;

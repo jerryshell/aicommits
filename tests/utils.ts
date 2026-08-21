@@ -59,6 +59,6 @@ export const files = Object.freeze({
   "data.json": Array.from({ length: 10 }, (_, i) => `${i}. Lorem ipsum dolor sit amet`).join("\n"),
 });
 
-// See ./diffs/README.md in order to generate diff files
+// Fixtures live in ./fixtures (fictional diffs, see fixtures/README.md)
 export const getDiff = async (diffName: string): Promise<string> =>
   fs.readFile(new URL(`fixtures/${diffName}`, import.meta.url), "utf8");

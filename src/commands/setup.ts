@@ -66,7 +66,7 @@ export default command(
       }
 
       // 3. Select model interactively
-      const { selectModel } = await import("../feature/models.js");
+      const { selectModel } = await import("../models.js");
       const selectedModel = await selectModel(
         baseUrl,
         config.OPENAI_API_KEY || "",

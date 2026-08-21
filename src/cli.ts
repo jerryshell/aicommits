@@ -5,7 +5,7 @@ import { cli } from "cleye";
 import pkg from "../package.json";
 const { description, version } = pkg;
 import aicommits from "./commands/aicommits.js";
-import prepareCommitMessageHook from "./commands/prepare-commit-msg-hook.js";
+import prepareCommitMessageHook from "./prepare-commit-msg-hook.js";
 import configCommand from "./commands/config.js";
 import setupCommand from "./commands/setup.js";
 import modelCommand from "./commands/model.js";

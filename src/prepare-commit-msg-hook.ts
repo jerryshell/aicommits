@@ -1,14 +1,13 @@
 import fs from "fs/promises";
 import { intro, outro, spinner } from "@clack/prompts";
 import { black, green, bgCyan } from "kolorist";
-import { getStagedDiff } from "../utils/git.js";
-import { getConfig } from "../utils/config-runtime.js";
-import { getGenerateParams } from "../feature/providers/index.js";
-import { generateMessages } from "../utils/openai.js";
-import { summarizeDiff } from "../utils/diff-summary.js";
-import { MAX_DIFF_LENGTH } from "../utils/constants.js";
-import { KnownError, handleCommandError } from "../utils/error.js";
-import { isHeadless } from "../utils/headless.js";
+import { getStagedDiff } from "./utils/git.js";
+import { getConfig, getGenerateParams } from "./utils/config-runtime.js";
+import { generateMessages } from "./utils/openai.js";
+import { summarizeDiff } from "./utils/diff-summary.js";
+import { MAX_DIFF_LENGTH } from "./utils/constants.js";
+import { KnownError, handleCommandError } from "./utils/error.js";
+import { isHeadless } from "./utils/headless.js";
 
 const [messageFilePath, commitSource] = process.argv.slice(2);
 

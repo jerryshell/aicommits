@@ -24,7 +24,7 @@
     "format": "bunx oxfmt",
     "lint": "bunx oxlint",
     "typecheck": "tsc",
-    "test": "tsx tests",
+    "test": "bun test tests/",
     "prepack": "bun run build"
   },
   "devDependencies": {
@@ -32,6 +32,7 @@
     "@ai-sdk/openai-compatible": "^3.0.16",
     "@ai-sdk/provider": "^3.0.0",
     "@clack/prompts": "^0.11.0",
+    "@types/bun": "^1.4.0",
     "@types/ini": "^1.3.34",
     "ai": "^7.0.39",
     "cleye": "^2.6.0",
@@ -39,8 +40,6 @@
     "fs-fixture": "^1.2.0",
     "ini": "^3.0.1",
     "kolorist": "^1.8.0",
-    "manten": "^0.7.0",
-    "tsx": "^4.23.1",
     "typescript": "^5.9.3",
     "zod": "^4.4.3"
   }
