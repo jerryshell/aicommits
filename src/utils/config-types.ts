@@ -100,7 +100,6 @@ export type ValidConfig = {
   OPENAI_BASE_URL: string | undefined;
   OPENAI_MODEL: string;
   model: string;
-  provider: string | undefined;
   timeout: number | undefined;
 };
 

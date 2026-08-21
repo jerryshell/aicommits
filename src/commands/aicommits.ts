@@ -3,8 +3,8 @@ import { black, dim, green, red, yellow, bgCyan } from "kolorist";
 import { copyToClipboard as copyMessage } from "../utils/clipboard.js";
 import { intro, outro, spinner } from "@clack/prompts";
 import { assertGitRepo, getStagedDiff, getDetectedMessage } from "../utils/git.js";
-import { getConfig, setConfigs } from "../utils/config-runtime.js";
-import { getProvider, getGenerateParams } from "../feature/providers/index.js";
+import { getConfig } from "../utils/config-runtime.js";
+import { getGenerateParams } from "../feature/providers/index.js";
 import { generateMessages } from "../utils/openai.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
@@ -65,8 +65,8 @@ export default async (
       type: commitType?.toString(),
     });
 
-    const providerInstance = getProvider(config);
-    if (!providerInstance) {
+    const params = getGenerateParams(config);
+    if (!params) {
       if (!headless) {
         console.log("Welcome to aicommits! Let's set up your AI provider.");
         console.log("Run `aicommits setup` to configure your provider.");
@@ -79,10 +79,7 @@ export default async (
       }
     }
 
-    const { model, baseUrl, apiKey, headers, timeout } = getGenerateParams(
-      providerInstance,
-      config,
-    );
+    const { model, baseUrl, apiKey, timeout } = params;
     config.model = model;
 
     // Prefer a condensed skeleton for huge diffs: ~30x fewer tokens
@@ -108,7 +105,6 @@ export default async (
           diff: diffToUse,
           timeout,
           customPrompt,
-          headers,
         });
       } finally {
         if (s) {
@@ -118,31 +114,7 @@ export default async (
       }
     };
 
-    let messages!: string[];
-    try {
-      messages = await attemptGeneration();
-    } catch (error: any) {
-      if ((error as any).isModelDeprecated) {
-        const fallbackModel = providerInstance.getDefaultModel();
-        if (fallbackModel && fallbackModel !== config.model) {
-          const deprecatedModel = config.model;
-          if (!headless) {
-            console.log(
-              yellow(
-                `⚠ Model "${deprecatedModel}" is deprecated. Switching to "${fallbackModel}".`,
-              ),
-            );
-          }
-          config.model = fallbackModel;
-          await setConfigs([["OPENAI_MODEL", fallbackModel]]);
-          messages = await attemptGeneration();
-        } else {
-          throw error;
-        }
-      } else {
-        throw error;
-      }
-    }
+    const messages = await attemptGeneration();
 
     if (messages.length === 0) {
       throw new KnownError("No commit messages were generated. Try again.");

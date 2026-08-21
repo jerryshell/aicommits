@@ -267,9 +267,7 @@ function handleGenerateError(error: unknown, model: string, timeout: number): ne
   }
 
   if (NoSuchModelError.isInstance(error)) {
-    const err = new KnownError(`Model "${model}" is not available or has been deprecated.`);
-    (err as any).isModelDeprecated = true;
-    throw err;
+    throw new KnownError(`Model "${model}" is not available or has been deprecated.`);
   }
 
   throw error;

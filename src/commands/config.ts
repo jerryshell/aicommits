@@ -20,7 +20,6 @@ export default command(
       if (!mode) {
         const config = await getConfig({}, {}, true);
 
-        console.log("Provider:", config.provider);
         if (config.OPENAI_API_KEY) {
           console.log("API Key:", `${config.OPENAI_API_KEY.substring(0, 4)}****`);
         }

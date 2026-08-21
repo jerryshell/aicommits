@@ -1,7 +1,7 @@
 import { command } from "cleye";
 import { outro } from "@clack/prompts";
 import { getConfig, setConfigs } from "../utils/config-runtime.js";
-import { getProvider } from "../feature/providers/index.js";
+import { getGenerateParams } from "../feature/providers/index.js";
 import { selectModel } from "../feature/models.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { isInteractive } from "../utils/headless.js";
@@ -23,38 +23,14 @@ export default command(
 
       const config = await getConfig();
 
-      if (!config.provider) {
+      const params = getGenerateParams(config);
+      if (!params) {
         outro("No provider configured. Run `aicommits setup` first.");
         return;
       }
 
-      const provider = getProvider(config);
-      if (!provider) {
-        outro("Invalid provider configured. Run `aicommits setup` to reconfigure.");
-        return;
-      }
-
-      const currentModel = config.OPENAI_MODEL;
-
-      // Validate provider config
-      const validation = provider.validateConfig();
-      if (!validation.valid) {
-        outro(
-          `Configuration issues: ${validation.errors.join(
-            ", ",
-          )}. Run \`aicommits setup\` to reconfigure.`,
-        );
-        return;
-      }
-
-      // Select model using provider
-      const selectedModel = await selectModel(
-        provider.getBaseUrl(),
-        provider.getApiKey() || "",
-        currentModel,
-        provider.getDefinition(),
-        provider.displayName,
-      );
+      // Select model using default base URL
+      const selectedModel = await selectModel(params.baseUrl, params.apiKey, config.OPENAI_MODEL);
 
       if (selectedModel) {
         // Save the selected model

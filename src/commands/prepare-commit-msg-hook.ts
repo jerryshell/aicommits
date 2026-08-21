@@ -3,7 +3,7 @@ import { intro, outro, spinner } from "@clack/prompts";
 import { black, green, bgCyan } from "kolorist";
 import { getStagedDiff } from "../utils/git.js";
 import { getConfig } from "../utils/config-runtime.js";
-import { getProvider, getGenerateParams } from "../feature/providers/index.js";
+import { getGenerateParams } from "../feature/providers/index.js";
 import { generateMessages } from "../utils/openai.js";
 import { summarizeDiff } from "../utils/diff-summary.js";
 import { MAX_DIFF_LENGTH } from "../utils/constants.js";
@@ -38,15 +38,12 @@ export default () =>
 
     const config = await getConfig({});
 
-    const providerInstance = getProvider(config);
-    if (!providerInstance) {
+    const params = getGenerateParams(config);
+    if (!params) {
       throw new KnownError("Invalid provider configuration. Run `aicommits setup` to reconfigure.");
     }
 
-    const { model, baseUrl, apiKey, headers, timeout } = getGenerateParams(
-      providerInstance,
-      config,
-    );
+    const { model, baseUrl, apiKey, timeout } = params;
 
     const s = headless ? null : spinner();
     s?.start("The AI is analyzing your changes");
@@ -60,7 +57,6 @@ export default () =>
         apiKey,
         diff: diffToUse,
         timeout,
-        headers,
       });
     } finally {
       s?.stop("Changes analyzed");

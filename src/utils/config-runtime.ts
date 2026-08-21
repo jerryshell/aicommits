@@ -11,26 +11,6 @@ import {
   type ConfigKeys,
   type RawConfig,
 } from "./config-types.js";
-import { providers } from "../feature/providers/providers-data.js";
-
-const getDefaultBaseUrl = (): string => "https://api.openai.com/v1";
-
-const detectProvider = (baseUrl?: string, apiKey?: string): string | undefined => {
-  if (baseUrl) {
-    const matchingProvider = providers.find(
-      (p) =>
-        p.baseUrl === baseUrl ||
-        (p.name === "ollama" && baseUrl.startsWith(p.baseUrl.slice(0, -3))),
-    );
-    if (matchingProvider) {
-      return matchingProvider.name;
-    } else {
-      return "custom";
-    }
-  } else if (apiKey) {
-    return "openai";
-  }
-};
 
 const getConfigPath = () => path.join(os.homedir(), ".aicommits");
 
@@ -72,20 +52,12 @@ export const getConfig = async (
     }
   }
 
-  // Detect provider from OPENAI_BASE_URL or default to OpenAI if only API key is set
-  let provider: string | undefined;
-  let baseUrl = parsedConfig.OPENAI_BASE_URL as string | undefined;
-  const apiKey = parsedConfig.OPENAI_API_KEY as string | undefined;
-
-  // If only API key is provided without base URL, default to OpenAI
-  if (!baseUrl && apiKey) {
-    baseUrl = getDefaultBaseUrl();
-    parsedConfig.OPENAI_BASE_URL = baseUrl;
+  // If only an API key is provided without a base URL, default to OpenAI
+  if (!parsedConfig.OPENAI_BASE_URL && parsedConfig.OPENAI_API_KEY) {
+    parsedConfig.OPENAI_BASE_URL = "https://api.openai.com/v1";
   }
 
-  provider = detectProvider(baseUrl, apiKey);
-
-  return { ...parsedConfig, model: parsedConfig.OPENAI_MODEL, provider } as ValidConfig;
+  return { ...parsedConfig, model: parsedConfig.OPENAI_MODEL } as ValidConfig;
 };
 
 export const setConfigs = async (keyValues: [key: string, value: string][]) => {

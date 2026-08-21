@@ -4,7 +4,7 @@ import { black, green, bgCyan } from "kolorist";
 import { intro, outro, spinner, isCancel } from "@clack/prompts";
 import { assertGitRepo } from "../utils/git.js";
 import { getConfig } from "../utils/config-runtime.js";
-import { getProvider } from "../feature/providers/index.js";
+import { getGenerateParams } from "../feature/providers/index.js";
 import { generateText } from "ai";
 import { makeProvider } from "../utils/openai.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
@@ -144,28 +144,22 @@ export default command(
       }
 
       const config = await getConfig();
-      const configProvider = await getProvider(config);
+      const params = getGenerateParams(config);
 
-      if (!configProvider) {
+      if (!params) {
         throw new KnownError("No provider configured");
       }
 
-      let baseUrl = configProvider.getBaseUrl();
-      if (!baseUrl || baseUrl === "") {
-        throw new KnownError(
-          "Base URL not configured. Please run `aicommits setup` to configure your provider.",
-        );
-      }
+      let baseUrl = params.baseUrl;
       if (!baseUrl.endsWith("/v1")) {
         baseUrl += "/v1";
       }
-      const apiKey = configProvider.getApiKey();
-      if (!apiKey) {
+      if (!params.apiKey) {
         throw new KnownError(
           "API key not configured. Please run `aicommits setup` to configure your provider.",
         );
       }
-      const aiProvider = makeProvider(baseUrl, apiKey);
+      const aiProvider = makeProvider(baseUrl, params.apiKey);
 
       const generating = spinner();
       generating.start(`Generating PR title and description (${numFiles} files changed)`);
