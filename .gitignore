@@ -16,8 +16,6 @@ node_modules/
 *.tgz
 
 # dotenv environment variables file
-.env
-.env.test
 
 # Distribution
 dist

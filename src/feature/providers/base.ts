@@ -4,7 +4,6 @@ export type ProviderDef = {
   name: string;
   displayName: string;
   baseUrl: string;
-  apiKeyFormat?: string;
   modelsFilter?: (models: any[]) => string[];
   defaultModels: string[];
   requiresApiKey: boolean;

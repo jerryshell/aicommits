@@ -4,7 +4,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { APICallError, NoSuchModelError } from "@ai-sdk/provider";
 import { z } from "zod";
 import { KnownError } from "./error.js";
-import type { CommitType } from "./config-types.js";
+import type { CommitType, ValidConfig } from "./config-types.js";
 import { generatePrompt, generateDescriptionPrompt } from "./prompt.js";
 import { isHeadless } from "./headless.js";
 
@@ -274,3 +274,64 @@ function handleGenerateError(error: unknown, model: string, timeout: number): ne
 
   throw error;
 }
+
+export type GenerateMessagesParams = {
+  model: string;
+  baseUrl: string;
+  apiKey: string;
+  diff: string;
+  timeout: number;
+  customPrompt?: string;
+  headers?: Record<string, string>;
+};
+
+// Shared by the main command and the prepare-commit-msg hook: generate one or
+// more commit messages (title, or title+description for body types).
+export const generateMessages = async (
+  config: ValidConfig,
+  { model, baseUrl, apiKey, diff, timeout, customPrompt, headers }: GenerateMessagesParams,
+): Promise<string[]> => {
+  if (config.type === "conventional+body" || config.type === "subject+body") {
+    const result = await generateCommitMessage({
+      baseUrl,
+      apiKey,
+      model,
+      locale: config.locale,
+      diff,
+      completions: 1,
+      maxLength: config["max-length"],
+      type: config.type,
+      timeout,
+      customPrompt,
+      headers,
+    });
+    const title = result.messages[0];
+    const { description } = await generateCommitDescription({
+      baseUrl,
+      apiKey,
+      model,
+      locale: config.locale,
+      title,
+      diff,
+      timeout,
+      maxLength: config["max-length"],
+      customPrompt,
+      headers,
+    });
+    return [description.trim() ? `${title}\n\n${description.trim()}` : title];
+  }
+  const result = await generateCommitMessage({
+    baseUrl,
+    apiKey,
+    model,
+    locale: config.locale,
+    diff,
+    completions: config.generate,
+    maxLength: config["max-length"],
+    type: config.type,
+    timeout,
+    customPrompt,
+    headers,
+  });
+  return result.messages;
+};

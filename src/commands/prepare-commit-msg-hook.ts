@@ -3,9 +3,10 @@ import { intro, outro, spinner } from "@clack/prompts";
 import { black, green, bgCyan } from "kolorist";
 import { getStagedDiff } from "../utils/git.js";
 import { getConfig } from "../utils/config-runtime.js";
-import { getProvider } from "../feature/providers/index.js";
-import { generateCommitMessage, generateCommitDescription } from "../utils/openai.js";
-import { MAX_DIFF_LENGTH, DIFF_TRUNCATED_SUFFIX } from "../utils/constants.js";
+import { getProvider, getGenerateParams } from "../feature/providers/index.js";
+import { generateMessages } from "../utils/openai.js";
+import { summarizeDiff } from "../utils/diff-summary.js";
+import { MAX_DIFF_LENGTH } from "../utils/constants.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 import { isHeadless } from "../utils/headless.js";
 
@@ -42,75 +43,25 @@ export default () =>
       throw new KnownError("Invalid provider configuration. Run `aicommits setup` to reconfigure.");
     }
 
-    // Validate provider config
-    const validation = providerInstance.validateConfig();
-    if (!validation.valid) {
-      throw new KnownError(
-        `Provider configuration issues: ${validation.errors.join(
-          ", ",
-        )}. Run \`aicommits setup\` to reconfigure.`,
-      );
-    }
-
-    const baseUrl = providerInstance.getBaseUrl();
-    const apiKey = providerInstance.getApiKey() || "";
-    const providerHeaders = providerInstance.getHeaders();
-
-    // Use config timeout, or default per provider
-    const timeout = config.timeout || (providerInstance.name === "ollama" ? 30_000 : 15_000);
-
-    // Use the unified model or provider default
-    let model = config.OPENAI_MODEL || providerInstance.getDefaultModel();
+    const { model, baseUrl, apiKey, headers, timeout } = getGenerateParams(
+      providerInstance,
+      config,
+    );
 
     const s = headless ? null : spinner();
     s?.start("The AI is analyzing your changes");
     let messages: string[];
     const diffToUse =
-      staged!.diff.length > MAX_DIFF_LENGTH
-        ? staged!.diff.substring(0, MAX_DIFF_LENGTH) + DIFF_TRUNCATED_SUFFIX
-        : staged!.diff;
+      staged.diff.length > MAX_DIFF_LENGTH ? summarizeDiff(staged.diff) : staged.diff;
     try {
-      if (config.type === "conventional+body" || config.type === "subject+body") {
-        const result = await generateCommitMessage({
-          baseUrl,
-          apiKey,
-          model,
-          locale: config.locale,
-          diff: diffToUse,
-          completions: 1,
-          maxLength: config["max-length"],
-          type: config.type,
-          timeout,
-          headers: providerHeaders,
-        });
-        const title = result.messages[0];
-        const { description } = await generateCommitDescription({
-          baseUrl,
-          apiKey,
-          model,
-          locale: config.locale,
-          title,
-          diff: diffToUse,
-          timeout,
-          maxLength: config["max-length"],
-          headers: providerHeaders,
-        });
-        messages = [description.trim() ? `${title}\n\n${description.trim()}` : title];
-      } else {
-        const result = await generateCommitMessage({
-          baseUrl,
-          apiKey,
-          model,
-          locale: config.locale,
-          diff: diffToUse,
-          completions: config.generate,
-          maxLength: config["max-length"],
-          type: config.type,
-          timeout,
-          headers: providerHeaders,
-        });
-        messages = result.messages;
-      }
+      messages = await generateMessages(config, {
+        model,
+        baseUrl,
+        apiKey,
+        diff: diffToUse,
+        timeout,
+        headers,
+      });
     } finally {
       s?.stop("Changes analyzed");
     }

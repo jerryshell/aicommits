@@ -4,8 +4,8 @@ import { copyToClipboard as copyMessage } from "../utils/clipboard.js";
 import { intro, outro, spinner } from "@clack/prompts";
 import { assertGitRepo, getStagedDiff, getDetectedMessage } from "../utils/git.js";
 import { getConfig, setConfigs } from "../utils/config-runtime.js";
-import { getProvider } from "../feature/providers/index.js";
-import { generateCommitMessage, generateCommitDescription } from "../utils/openai.js";
+import { getProvider, getGenerateParams } from "../feature/providers/index.js";
+import { generateMessages } from "../utils/openai.js";
 import { KnownError, handleCommandError } from "../utils/error.js";
 
 import { getCommitMessage } from "../utils/commit-helpers.js";
@@ -79,32 +79,18 @@ export default async (
       }
     }
 
-    // Use config timeout, or default per provider
-    const timeout = config.timeout || (providerInstance.name === "ollama" ? 30_000 : 15_000);
-
-    // Validate provider config
-    const validation = providerInstance.validateConfig();
-    if (!validation.valid) {
-      throw new KnownError(
-        `Provider configuration issues: ${validation.errors.join(
-          ", ",
-        )}. Run \`aicommits setup\` to reconfigure.`,
-      );
-    }
-
-    // Use the unified model setting or provider default
-    config.model = config.OPENAI_MODEL || providerInstance.getDefaultModel();
+    const { model, baseUrl, apiKey, headers, timeout } = getGenerateParams(
+      providerInstance,
+      config,
+    );
+    config.model = model;
 
     // Prefer a condensed skeleton for huge diffs: ~30x fewer tokens
     const prepareDiff = (diff: string) =>
       diff.length > MAX_DIFF_LENGTH ? summarizeDiff(diff) : diff;
     const diffToUse = prepareDiff(staged.diff);
 
-    const baseUrl = providerInstance.getBaseUrl();
-    const apiKey = providerInstance.getApiKey() || "";
-    const providerHeaders = providerInstance.getHeaders();
-
-    const attemptGeneration = async (): Promise<{ messages: string[]; usage: any }> => {
+    const attemptGeneration = async (): Promise<string[]> => {
       const s = headless ? null : spinner();
       if (s) {
         s.start(
@@ -115,57 +101,15 @@ export default async (
       }
       const startTime = Date.now();
       try {
-        let messages: string[];
-        let usage: any;
-
-        if (config.type === "conventional+body" || config.type === "subject+body") {
-          const result = await generateCommitMessage({
-            baseUrl,
-            apiKey,
-            model: config.model!,
-            locale: config.locale,
-            diff: diffToUse,
-            completions: 1,
-            maxLength: config["max-length"],
-            type: config.type,
-            timeout,
-            customPrompt,
-            headers: providerHeaders,
-          });
-          const title = result.messages[0];
-          const { description } = await generateCommitDescription({
-            baseUrl,
-            apiKey,
-            model: config.model!,
-            locale: config.locale,
-            title,
-            diff: diffToUse,
-            timeout,
-            maxLength: config["max-length"],
-            customPrompt,
-            headers: providerHeaders,
-          });
-          messages = [description.trim() ? `${title}\n\n${description.trim()}` : title];
-          usage = result.usage;
-        } else {
-          const result = await generateCommitMessage({
-            baseUrl,
-            apiKey,
-            model: config.model!,
-            locale: config.locale,
-            diff: diffToUse,
-            completions: config.generate,
-            maxLength: config["max-length"],
-            type: config.type,
-            timeout,
-            customPrompt,
-            headers: providerHeaders,
-          });
-          messages = result.messages;
-          usage = result.usage;
-        }
-
-        return { messages, usage };
+        return await generateMessages(config, {
+          model: config.model!,
+          baseUrl,
+          apiKey,
+          diff: diffToUse,
+          timeout,
+          customPrompt,
+          headers,
+        });
       } finally {
         if (s) {
           const duration = Date.now() - startTime;
@@ -176,7 +120,7 @@ export default async (
 
     let messages!: string[];
     try {
-      ({ messages } = await attemptGeneration());
+      messages = await attemptGeneration();
     } catch (error: any) {
       if ((error as any).isModelDeprecated) {
         const fallbackModel = providerInstance.getDefaultModel();
@@ -191,7 +135,7 @@ export default async (
           }
           config.model = fallbackModel;
           await setConfigs([["OPENAI_MODEL", fallbackModel]]);
-          ({ messages } = await attemptGeneration());
+          messages = await attemptGeneration();
         } else {
           throw error;
         }
