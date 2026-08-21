@@ -17,7 +17,7 @@ cd aicommits
 bun install
 bun run build
 bun link
-aicommits setup   # configure your API key and provider
+aicommits setup   # configure your API endpoint and key
 aicommits         # generate a commit message from staged changes
 # tip: `aic` works too — same thing, shorter
 ```
@@ -48,4 +48,4 @@ aicommits         # generate a commit message from staged changes
 
 ## Providers
 
-Supports any OpenAI-compatible API: OpenAI, Together, Groq, xAI, Ollama, LM Studio, OpenRouter, or a custom endpoint.
+Any OpenAI-compatible endpoint works — OpenAI, Groq, xAI, Together, Ollama, LM Studio, vLLM, or a custom server. `aicommits setup` asks for the base URL and API key; no per-provider presets or hardcoded defaults. Local endpoints (e.g. Ollama) can use an empty API key.

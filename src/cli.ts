@@ -20,8 +20,7 @@ cli(
     name: "aicommits",
 
     /**
-     * Since this is a wrapper around `git commit`,
-     * flags should not overlap with it
+     * Flags must not overlap with `git commit` flags
      * https://git-scm.com/docs/git-commit
      */
     flags: {

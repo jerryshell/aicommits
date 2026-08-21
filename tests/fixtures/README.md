@@ -1,12 +1,3 @@
-# Generating diffs
+# Fixtures
 
-1. Instruct ChatGPT with the following command:
-
-```
-I want you to act as a git cli
-I will give you the type of content and you will generate a random git diff based on that
-```
-
-2. Insert the type of change
-
-ChatGPT will generate a fictional git diff based on the type of change you inserted.
+Fictional git diffs used as test inputs for LLM commit-message generation. There is no real code behind them; each diff is made up to exercise one change type.
