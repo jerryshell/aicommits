@@ -40,7 +40,7 @@ function detectPackageManager(distTag: string): PackageManagerInfo {
       execPath.includes("/usr/local") ||
       execPath.includes("/usr/bin")
     ) {
-      return { name: "npm", updateCommand: `npm install -g aicommits@${distTag}` };
+      return { name: "npm", updateCommand: `npm install -g @jerryshell/aicommits@${distTag}` };
     }
   } catch {
     // Fall through to other detection methods
@@ -52,7 +52,7 @@ function detectPackageManager(distTag: string): PackageManagerInfo {
     // Check if installed via pnpm global
     const pnpmList = execSync("pnpm list -g aicommits", { encoding: "utf8" });
     if (pnpmList.includes("aicommits")) {
-      return { name: "pnpm", updateCommand: `pnpm add -g aicommits@${distTag}` };
+      return { name: "pnpm", updateCommand: `pnpm add -g @jerryshell/aicommits@${distTag}` };
     }
   } catch {
     // Not pnpm
@@ -64,7 +64,7 @@ function detectPackageManager(distTag: string): PackageManagerInfo {
     // Check if installed via yarn global
     const yarnList = execSync("yarn global list", { encoding: "utf8" });
     if (yarnList.includes("aicommits")) {
-      return { name: "yarn", updateCommand: `yarn global add aicommits@${distTag}` };
+      return { name: "yarn", updateCommand: `yarn global add @jerryshell/aicommits@${distTag}` };
     }
   } catch {
     // Not yarn
@@ -76,19 +76,19 @@ function detectPackageManager(distTag: string): PackageManagerInfo {
     // Check if installed via bun
     const bunList = execSync("bun pm bin -g", { encoding: "utf8" });
     if (process.execPath.includes("bun") || bunList.includes("aicommits")) {
-      return { name: "bun", updateCommand: `bun add -g aicommits@${distTag}` };
+      return { name: "bun", updateCommand: `bun add -g @jerryshell/aicommits@${distTag}` };
     }
   } catch {
     // Not bun
   }
 
   // Default to npm
-  return { name: "npm", updateCommand: `npm install -g aicommits@${distTag}` };
+  return { name: "npm", updateCommand: `npm install -g @jerryshell/aicommits@${distTag}` };
 }
 
 async function getLatestVersion(distTag: string): Promise<string | null> {
   try {
-    const response = await fetch(`https://registry.npmjs.org/aicommits/${distTag}`, {
+    const response = await fetch(`https://registry.npmjs.org/@jerryshell%2Faicommits/${distTag}`, {
       headers: { Accept: "application/json" },
     });
     if (!response.ok) return null;

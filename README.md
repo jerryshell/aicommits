@@ -9,7 +9,21 @@ AI-powered git commit message generator. Fork of [nutlope/aicommits](https://git
 - **Large-diff summarization** — Diffs over 30 KB are condensed locally into a per-file skeleton (stat + key declarations) instead of sending truncated raw diff text, cutting tokens ~10× on big commits. Small diffs are sent verbatim.
 - **Bun for dev, Node for prod** — Dev tooling uses Bun (faster builds, oxfmt, oxlint). Production binary targets Node.
 
+## Install
+
+```bash
+npm add -g @jerryshell/aicommits
+```
+
 ## Quick start
+
+```bash
+aicommits setup   # configure your API endpoint and key, pick a model
+aicommits         # generate a commit message from staged changes
+# tip: `aic` works too — same thing, shorter
+```
+
+## Development
 
 ```bash
 git clone https://github.com/jerryshell/aicommits.git
@@ -17,9 +31,6 @@ cd aicommits
 bun install
 bun run build
 bun link
-aicommits setup   # configure your API endpoint and key
-aicommits         # generate a commit message from staged changes
-# tip: `aic` works too — same thing, shorter
 ```
 
 ## Commands
@@ -27,7 +38,7 @@ aicommits         # generate a commit message from staged changes
 | Command            | Description                                 |
 | ------------------ | ------------------------------------------- |
 | `aicommits`        | Generate commit message from staged changes |
-| `aicommits setup`  | Configure provider and API key              |
+| `aicommits setup`  | Configure API endpoint and key              |
 | `aicommits model`  | Select or change AI model                   |
 | `aicommits pr`     | Generate PR from branch diff                |
 | `aicommits config` | View/edit config                            |

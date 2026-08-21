@@ -22,3 +22,6 @@ dist
 
 # Eslint cache
 .eslintcache
+
+# npm pack staging leftover
+/package/
