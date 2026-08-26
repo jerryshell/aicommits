@@ -13,6 +13,13 @@ const shouldLogDebug = () =>
 
 const titleSchema = z.object({ title: z.string().min(1) });
 
+// The SDK's `reasoning: "none"` is only honored by the OpenAI provider.
+// OpenAI-compatible endpoints ignore it, so reasoning models burn their whole
+// token budget on reasoning_content and return an empty message (which fails
+// schema parsing). Send the explicit provider option instead; the OpenAI
+// provider ignores the openaiCompatible key.
+const noReasoningProviderOptions = { openaiCompatible: { reasoningEffort: "none" } };
+
 const descriptionSchema = z.object({ description: z.string() });
 
 const deduplicateMessages = (array: string[]) => Array.from(new Set(array));
@@ -53,6 +60,7 @@ const shortenCommitMessage = async (
       temperature: 0.2,
       maxRetries: 2,
       reasoning: "none",
+      providerOptions: noReasoningProviderOptions,
       abortSignal: controller.signal,
     });
     return output.title;
@@ -106,6 +114,7 @@ export const generateCommitMessage = async ({
         temperature: 0.4,
         maxRetries: 2,
         reasoning: "none",
+        providerOptions: noReasoningProviderOptions,
         abortSignal: controller.signal,
       }),
     );
@@ -216,6 +225,7 @@ export const generateCommitDescription = async ({
       temperature: 0.4,
       maxRetries: 2,
       reasoning: "none",
+      providerOptions: noReasoningProviderOptions,
       abortSignal: controller.signal,
     });
     clearTimeout(timeoutId);
