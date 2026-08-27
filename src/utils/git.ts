@@ -36,7 +36,7 @@ const isLockFile = (file: string) => {
 const filesToExclude = lockFilePatterns.map(excludeFromDiff);
 
 export const getStagedDiff = async (excludeFiles?: string[]) => {
-  const diffCached = ["diff", "--cached", "--diff-algorithm=minimal"];
+  const diffCached = ["-c", "core.quotePath=false", "diff", "--cached", "--diff-algorithm=minimal"];
   const customExcludes = excludeFiles ? excludeFiles.map(excludeFromDiff) : [];
 
   // First, get all staged files without any excludes
