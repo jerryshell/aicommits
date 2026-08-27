@@ -5,7 +5,7 @@ import { APICallError, NoSuchModelError } from "@ai-sdk/provider";
 import { z } from "zod";
 import { KnownError } from "./error.js";
 import type { CommitType, ValidConfig } from "./config-types.js";
-import { generatePrompt, generateDescriptionPrompt } from "./prompt.js";
+import { generatePrompt, generateDescriptionPrompt, languageRule } from "./prompt.js";
 import { isHeadless } from "./headless.js";
 
 const shouldLogDebug = () =>
@@ -48,10 +48,11 @@ const shortenCommitMessage = async (
   message: string,
   maxLength: number,
   timeout: number,
+  locale: string,
 ) => {
   const { controller, timeoutId } = createAbortController(timeout);
   try {
-    const s = `You are a tool that shortens git commit messages. Given a commit message, make it shorter while preserving the key information and format. The shortened message must be ${maxLength} characters or less. Respond with JSON: {"title": "shortened commit message"}.`;
+    const s = `${languageRule(locale)}\nYou are a tool that shortens git commit messages. Given a commit message, make it shorter while preserving the key information and format. The shortened message must be ${maxLength} characters or less. Respond with JSON: {"title": "shortened commit message"}.`;
     const { output } = await generateText({
       model: provider(model),
       output: Output.object({ schema: titleSchema }),
@@ -110,7 +111,7 @@ export const generateCommitMessage = async ({
         model: provider(model),
         output: Output.object({ schema: titleSchema }),
         system: generatePrompt(locale, maxLength, type, customPrompt),
-        prompt: diff,
+        prompt: `${languageRule(locale)}\n\n${diff}`,
         temperature: 0.4,
         maxRetries: 2,
         reasoning: "none",
@@ -135,7 +136,7 @@ export const generateCommitMessage = async ({
           if (msg.length <= maxLength) return msg;
           needsShortening = true;
           try {
-            return await shortenCommitMessage(provider, model, msg, maxLength, timeout);
+            return await shortenCommitMessage(provider, model, msg, maxLength, timeout, locale);
           } catch {
             return msg;
           }
@@ -221,7 +222,8 @@ export const generateCommitDescription = async ({
       model: provider(model),
       output: Output.object({ schema: descriptionSchema }),
       system: generateDescriptionPrompt(locale, maxLength, customPrompt),
-      prompt: "Commit message title:\n" + title + "\n\nCode diff:\n" + diff,
+      prompt:
+        languageRule(locale) + "\n\nCommit message title:\n" + title + "\n\nCode diff:\n" + diff,
       temperature: 0.4,
       maxRetries: 2,
       reasoning: "none",

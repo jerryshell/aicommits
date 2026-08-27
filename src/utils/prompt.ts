@@ -1,5 +1,10 @@
 import type { CommitType } from "./config-types.js";
 
+// Language rule is imperative + negative: it must override the tendency of
+// models to mirror the language of the code/comments in the diff.
+export const languageRule = (locale: string) =>
+  `Message language: ${locale}. The commit message MUST be written entirely in "${locale}", even if the code, comments, or strings in the diff use a different language. Never write in another language.`;
+
 const commitTypeFormats: Record<CommitType, string> = {
   plain: "<commit message>",
   conventional:
@@ -130,9 +135,9 @@ export const generatePrompt = (
 ) =>
   [
     "Generate a concise git commit message title in present tense that precisely describes the key changes in the following code diff. Focus on what was changed, not just file names.",
-    `Message language: ${locale}`,
+    languageRule(locale),
     `Commit message must be a maximum of ${maxLength} characters.`,
-    'Exclude anything unnecessary such as translation. Respond with JSON: {"title": "commit message here"}.',
+    'Do not add explanations, notes, or translations beyond the commit message itself. Respond with JSON: {"title": "commit message here"}.',
     "Be specific: include concrete details (package names, versions, functionality) rather than generic statements.",
     customPrompt,
     commitTypes[type],
@@ -155,7 +160,7 @@ export const generateDescriptionPrompt = (
     "Output must be brief: use 3–6 bullet points (one short line each), or 2–4 short sentences. No long paragraphs. Focus on what changed and why, in present tense.",
     `Git convention: each line at most ${maxLength} characters. When a bullet line wraps, indent the continuation with 2 spaces so it aligns under the bullet text.`,
     'Do not repeat the title. No meta-commentary (e.g. "This commit..."). Respond with JSON: {"description": "commit body here"}.',
-    `Message language: ${locale}`,
+    languageRule(locale),
     customPrompt,
   ]
     .filter(Boolean)
