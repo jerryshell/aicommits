@@ -5,7 +5,7 @@ export const getCommitMessage = async (
   messages: string[],
   skipConfirm: boolean,
 ): Promise<string | null> => {
-  const { select, selectKey, text, isCancel } = await import("@clack/prompts");
+  const { select, text, isCancel } = await import("@clack/prompts");
   const { dim } = await import("kolorist");
 
   // Single message case
@@ -23,19 +23,19 @@ export const getCommitMessage = async (
     }
 
     console.log(`\n\x1b[1m${message}\x1b[0m\n`);
-    const action = await selectKey({
+    const action = await select({
       message: "Use this commit message?",
       options: [
-        { label: "Yes", value: "y" },
-        { label: "Edit", value: "e" },
-        { label: "No", value: "n" },
+        { label: "Yes", value: "yes" },
+        { label: "Edit", value: "edit" },
+        { label: "No", value: "no" },
       ],
     });
 
-    if (isCancel(action) || action === "n") {
+    if (isCancel(action) || action === "no") {
       return null;
     }
-    if (action === "y") {
+    if (action === "yes") {
       return message;
     }
 
