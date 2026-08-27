@@ -2,11 +2,12 @@
 
 AI-powered git commit message generator. Fork of [nutlope/aicommits](https://github.com/nutlope/aicommits).
 
-## What's different from upstream
+## Features and changes
 
 - **Structured output**: Uses Zod schemas + `Output.object()` to enforce JSON responses, eliminating parsing fragility from free-text LLM output.
 - **No reasoning tokens**: All LLM calls disable reasoning (`reasoning: "none"`, sent as `reasoning_effort: "none"` on OpenAI-compatible endpoints), skipping thinking tokens on models that support it.
 - **Large-diff summarization**: Diffs over 30 KB are condensed locally into a per-file skeleton (stat + key declarations) instead of sending truncated raw diff text, cutting tokens ~10× on big commits. Small diffs are sent verbatim.
+- **Interactive editing**: After generation, use the arrow keys to choose `Yes`, `Edit`, or `No`; `Edit` lets you revise the message before committing.
 - **Bun for dev, Node for prod**: Dev tooling uses Bun (faster builds, oxfmt, oxlint). Production binary targets Node.
 
 ## Install
