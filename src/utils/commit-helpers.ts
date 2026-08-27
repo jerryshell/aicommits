@@ -5,7 +5,7 @@ export const getCommitMessage = async (
   messages: string[],
   skipConfirm: boolean,
 ): Promise<string | null> => {
-  const { select, confirm, isCancel } = await import("@clack/prompts");
+  const { select, selectKey, text, isCancel } = await import("@clack/prompts");
   const { dim } = await import("kolorist");
 
   // Single message case
@@ -23,11 +23,29 @@ export const getCommitMessage = async (
     }
 
     console.log(`\n\x1b[1m${message}\x1b[0m\n`);
-    const confirmed = await confirm({
+    const action = await selectKey({
       message: "Use this commit message?",
+      options: [
+        { label: "Yes", value: "y" },
+        { label: "Edit", value: "e" },
+        { label: "No", value: "n" },
+      ],
     });
 
-    return confirmed && !isCancel(confirmed) ? message : null;
+    if (isCancel(action) || action === "n") {
+      return null;
+    }
+    if (action === "y") {
+      return message;
+    }
+
+    const edited = await text({
+      message: "Edit commit message:",
+      initialValue: message,
+      validate: (value) => (value.trim() ? undefined : "Commit message cannot be empty"),
+    });
+
+    return isCancel(edited) ? null : edited;
   }
 
   // Multiple messages case
