@@ -127,7 +127,7 @@ export default async (
     }
 
     // Interactive mode: handle commit message selection and confirmation
-    const message = await getCommitMessage(messages, skipConfirm);
+    const message = await getCommitMessage(messages, skipConfirm, copyToClipboard);
     if (!message) {
       outro("Commit cancelled");
       return;
@@ -138,6 +138,8 @@ export default async (
       const success = await copyMessage(message);
       if (success) {
         outro(`${green("✔")} Message copied to clipboard`);
+      } else {
+        outro(`${red("✘")} Could not copy message to clipboard`);
       }
       return;
     }
