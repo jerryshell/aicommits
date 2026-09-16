@@ -19,13 +19,16 @@
     "dist"
   ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "bun build src/cli.ts --outfile=dist/cli.mjs --format=esm --minify --target=node --banner='#!/usr/bin/env node'",
-    "format": "bunx oxfmt",
-    "lint": "bunx oxlint",
+    "build": "bun build src/cli.ts --outfile=dist/cli.mjs --format=esm --minify --target=node",
+    "format": "oxfmt",
+    "lint": "oxlint",
     "typecheck": "tsc",
-    "test": "bun test tests/",
-    "prepack": "bun run build"
+    "test": "bun run build && bun test tests/",
+    "prepare": "bun run build"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^4.0.21",
@@ -40,7 +43,12 @@
     "fs-fixture": "^1.2.0",
     "ini": "^3.0.1",
     "kolorist": "^1.8.0",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
     "typescript": "^5.9.3",
     "zod": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

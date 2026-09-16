@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Suppress AI SDK warnings (e.g., "temperature is not supported for reasoning models")
 globalThis.AI_SDK_LOG_WARNINGS = false;
 
